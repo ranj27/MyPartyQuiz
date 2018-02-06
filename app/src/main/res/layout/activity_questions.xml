@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    tools:context="com.quiz.rsudheen.partyquiz.QuestionsActivity">
+
+    <!--<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/exitBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Exit" />
+
+        <Button
+            android:id="@+id/settingsBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Settings" />
+
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/button4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Button" />
+    </LinearLayout>-->
+
+    <TableLayout
+        android:id="@+id/tableForQuestions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*">
+
+        <TableRow
+            android:id="@+id/row1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/catBtn1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+                <!--android:text="Movies" />-->
+
+            <Button
+                android:id="@+id/catBtn2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+                <!--android:text="History" />-->
+
+            <Button
+                android:id="@+id/catBtn3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+                <!--android:text="Fun Stuff" />-->
+
+            <Button
+                android:id="@+id/catBtn4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+                <!--android:text="Science" />-->
+
+            <Button
+                android:id="@+id/catBtn5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+                <!--android:text="Math" />-->
+
+            <Button
+                android:id="@+id/catBtn6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+                <!--android:text="Epics" />-->
+
+        </TableRow>
+
+
+    </TableLayout>
+</LinearLayout>
