@@ -7,11 +7,15 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.Layout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
@@ -63,6 +67,9 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
     private Button[][] buttons = new Button[ROWS_COUNT][COLS_COUNT];
     private Button mButton;
     private List<Categories> categories;
+    private int categoryColor;
+    private Button mStartQuizBtn;
+    private boolean viewOnly = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +78,7 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
         Bundle extras = intent.getExtras();
         roundId = extras.getInt("roundID");
         quizId = extras.getInt("quizID");
+        viewOnly = extras.getBoolean("viewOnly");
 
 
         setContentView(R.layout.activity_questions);
@@ -78,16 +86,19 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
         TableRow headerRow = (TableRow) mTableLayout.getChildAt(0).findViewById(R.id.row1);
 
         db = new DatabaseHelper(getApplicationContext());
+//        db.insertDefaultCategories(quizId,roundId);
         questions = db.getQuestionsById(quizId, roundId);
-        categories = db.getCategoriesFoQuizId(quizId,roundId);
+        categories = db.getCategoriesFoQuizId(quizId, roundId);
         /*if (questions.isEmpty()) {
             db.createNewQuestionsforQuiz(quizId, roundId);
             questions = db.getQuestionsById(quizId, roundId);
         }
         List<Categories> categories = getCategories();*/
 
-        if (categories.isEmpty()){
-            categories = defaultCategories;
+        if (categories.isEmpty()) {
+            //categories = defaultCategories;
+            db.insertDefaultCategories(quizId, roundId);
+            categories = db.getCategoriesFoQuizId(quizId, roundId);
         }
 
         if (!categories.isEmpty()) {
@@ -131,6 +142,8 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
                 if (child instanceof Button) {
                     Button button = (Button) child;
                     category = db.getCategoryByName(button.getText().toString());
+                    ColorDrawable colorDrawable = (ColorDrawable) button.getBackground();
+                    categoryColor = colorDrawable.getColor();
                 }
             }
             questions = db.getQuestionsByCategory(category.getCategoryName(), quizId, roundId);
@@ -142,11 +155,10 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
                 if (iter != null && iter.hasNext()) {
                     q = (Questions) iter.next();
                     if (q != null) {
-                        if (q.getCategoryName() != null && q.getCategoryName().equals(category.getCategoryName()) ) {
+                        if (q.getCategoryName() != null && q.getCategoryName().equals(category.getCategoryName())) {
                             Log.d("Ranj", "Question ID " + q.getQuestionId());
                             buttons[j][i].setId(q.getQuestionId());
-                            buttons[j][i].setText(buttons[j][i].getText().toString() + " - " + q.getQuestionId());
-                            buttons[j][i].setBackgroundColor(Color.MAGENTA);
+                            buttons[j][i].setBackgroundColor(categoryColor);
                         }
                     }
                 }
@@ -166,10 +178,7 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
                 Log.d("Ranj", "Complexity name " + c.getComplexity());
             }
         }
-        /*for(Questions q: questionsList){
-            category = db.getCategoryById(q.getCategoryId());
-            Log.d("Ranj"," Category name " + category.getCategoryName());
-        }*/
+
         return scoresList;
 
     }
@@ -197,6 +206,8 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
                     Toast.makeText(getApplicationContext(), "Enter valid name ", Toast.LENGTH_LONG).show();
                 } else {
                     button.setText(newCategoryName);
+                    updateCategoryName(currentCategoryName, newCategoryName);
+                    updateQuestionsCategory(currentCategoryName, newCategoryName);
                     dialog.dismiss();
                 }
             }
@@ -221,6 +232,14 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
 
     }
 
+    private void updateQuestionsCategory(String currentCategoryName, String newCategoryName) {
+        db.updateQuestionCategory(quizId, roundId, currentCategoryName, newCategoryName);
+    }
+
+    private void updateCategoryName(String currentCategoryName, String newCategoryName) {
+        db.updateQuizCategoryName(quizId, roundId, currentCategoryName, newCategoryName);
+    }
+
     private List<Categories> getCategories() {
         Categories category = null;
         List<Categories> categoriesList = new ArrayList<Categories>();
@@ -238,7 +257,7 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
     }
 
     private void populateQuestions() {
-        int count = 5;
+        int count = 1;
         Categories colCategory = null;
 
         List<Scores> scorelist = getScores();
@@ -268,18 +287,18 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
 
                 Button button = new Button(this);
 //                ViewGroup.LayoutParams params = button.getLayoutParams();
-                button.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT,
-                        TableRow.LayoutParams.MATCH_PARENT, 1.0f));
+                TableRow.LayoutParams layoutParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT, 1.0f);
+                layoutParams.setMargins(1, 1, 1, 1);
+                button.setLayoutParams(layoutParams);
+
+
+                /*button.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT,
+                        TableRow.LayoutParams.MATCH_PARENT, 1.0f));*/
 //                    button.setText(String.valueOf(scorelist.get(count).getScore()));
-                button.setText(String.valueOf(count));
-               /* if (iter!=null && iter.hasNext()) {
-                    q = (Questions) iter.next();
-                    if (q.getCategoryName().equals(colCategory.getCategoryName())) {
-                        Log.d("Ranj", "Question ID " + q.getQuestionId());
-                        button.setId(q.getQuestionId());
-                        button.setBackgroundColor(Color.MAGENTA);
-                    }
-                }*/
+                button.setText(Html.fromHtml("<color:'black'> " + count + "</color>&nbsp&nbsp&nbsp<b align=right>  10 </b>"));
+//                button.setText("10");
+                button.setBackgroundColor(Color.LTGRAY);
+                button.setPadding(1, 1, 1, 1);
                 tableRow.addView(button);
                 buttons[row][col] = button;
                 button.setOnClickListener(new View.OnClickListener() {
@@ -295,114 +314,69 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
                             if (child instanceof Button) {
                                 Button button = (Button) child;
                                 category = db.getCategoryByName(button.getText().toString());
+                                ColorDrawable categoryCol = (ColorDrawable) button.getBackground();
+                                categoryColor = categoryCol.getColor();
                             }
                         }
-                        if (v instanceof View) {
+                        /*if (v instanceof View) {
 
                             String scoreValue = b.getText().toString();
                             scores = db.getScoresbyValue(scoreValue);
-                        }
+                        }*/
 //                            createNewQuestion(v,FINAL_ROW, FINAL_COL);
-                        Log.d("Ranj","Button ID on Click " + v.getId());
-                        launchNewQuestionActivity(v, category.getCategoryName(), scores.getScore(), v.getId());
+//                        Log.d("Ranj","Button ID on Click " + v.getId());
+                        if (viewOnly) {
+                            launchQuestionViewActivity(v.getId(),category.getCategoryName(),categoryColor);
+                        } else {
+                            launchNewQuestionActivity(v, category.getCategoryName(), category.getCategoryId(), v.getId());
+                        }
+
+
                     }
                 });
 
             }
-            count = count + 5;
+            count++;
 //            }
 
 
         }
     }
 
-    private void launchNewQuestionActivity(View view, String categoryName, int score, int questionID) {
+    private void launchQuestionViewActivity(int id, String categoryName, int colorId) {
+        Intent intent = new Intent(getApplicationContext(), QuestionViewActivity.class);
+        intent.putExtra("questionID", id);
+        intent.putExtra("categoryName",categoryName);
+        intent.putExtra("categoryColor",colorId);
+        startActivityForResult(intent, 5);
+    }
+
+    private void launchNewQuestionActivity(View view, String categoryName, int categoryId,int questionID) {
         Intent intent = new Intent(getApplicationContext(), NewQuestionActivity.class);
         intent.putExtra("quizID", quizId);
         intent.putExtra("roundID", roundId);
         intent.putExtra("categoryName", categoryName);
         intent.putExtra("questionID", questionID);
+        intent.putExtra("categoryID", categoryId);
         mButton = (Button) view;
-        intent.putExtra("score", score);
+//        intent.putExtra("score", score);
 //        startActivity(intent);
         startActivityForResult(intent, 5);
     }
 
-   /* private void createNewQuestion(View buttonView, int final_row, int final_col) {
-        View view = mTableLayout.getChildAt(0);
-        Categories category = new Categories();
-        Scores scores = new Scores();
-        if (view instanceof View) {
-            TableRow tableRow = (TableRow) view;
-            View child = tableRow.getChildAt(final_col);
-            if (child instanceof Button) {
-                Button button = (Button) child;
-//                Toast.makeText(getApplicationContext(), "Click on the category " + button.getText().toString(), Toast.LENGTH_SHORT).show();
-                category = db.getCategoryByName(button.getText().toString());
-            }
-        }
-        if (buttonView instanceof View) {
-            Button button = (Button) buttonView;
-            String scoreValue = button.getText().toString();
-            scores = db.getScoresbyValue(scoreValue);
-        }
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(QuestionsActivity.this);
-
-        final View dialogView = getLayoutInflater().inflate(R.layout.question_dialog, null);
-        Button saveBtn = dialogView.findViewById(R.id.saveBtn);
-        Button cancelBtn = dialogView.findViewById(R.id.cancelBtn);
-        final TextView questionTxt = (TextView) dialogView.findViewById(R.id.questionEditText);
-        final TextView answerTxt = (TextView) dialogView.findViewById(R.id.answerTxt);
-        final TextView choice2Txt = (TextView) dialogView.findViewById(R.id.choice2Txt);
-        final TextView choice3Txt = (TextView) dialogView.findViewById(R.id.choice3Txt);
-        final TextView choice4Txt = (TextView) dialogView.findViewById(R.id.choice4Txt);
-
-        alertDialog.setView(dialogView);
-        alertDialog.setTitle("Add New Question");
-        final AlertDialog dialog = alertDialog.create();
-        dialog.show();
-
-        final Categories finalCategory = category;
-        final Scores finalScore = scores;
-        saveBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean result = ValidateQuestionInput();
-//                InsertQuestiontoDB(questionTxt, answerTxt, choice2Txt, choice3Txt, choice4Txt, quizId, roundId, finalCategory.getCategoryId(), finalScore.getScoreId());
-            }
-
-            private boolean ValidateQuestionInput() {
-                boolean result = false;
-                if (questionTxt.getText().toString().isEmpty() || answerTxt.getText().toString().isEmpty()) {
-                    final AlertDialog.Builder dialog1 = new AlertDialog.Builder(dialog.getContext());
-                    dialog1.setMessage("Enter valid input");
-                    dialog1.setCancelable(true);
-                    dialog1.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                        }
-                    });
-                    dialog1.show();
-                }
-                return result;
-            }
-        });
-
-        cancelBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-
-
-    }
-*/
 
     @Override
     public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.startBtn:
+                startQuiz();
+                break;
 
+        }
+
+    }
+
+    private void startQuiz() {
     }
 
     @Override
@@ -414,7 +388,8 @@ public class QuestionsActivity extends Activity implements View.OnClickListener 
                 long questionID = extras.getLong("questionID");
                 Log.d("Ranj", "QUestion ID is " + questionID);
                 mButton.setId((int) questionID);
-                mButton.setBackgroundColor(Color.CYAN);
+//                mButton.setBackgroundColor(Color.CYAN);
+                mButton.setBackgroundColor(categoryColor);
                 Questions q = db.getQuestionById((int) questionID);
                 Log.d("Ranj", "Question is " + q.getQuestion());
 

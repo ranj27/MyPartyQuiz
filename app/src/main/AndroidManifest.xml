@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.quiz.rsudheen.partyquiz">
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- <uses-permission android:name="android.permission.CAMERA"></uses-permission> -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -11,7 +15,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -21,7 +26,9 @@
         <activity android:name=".QuizActivity" />
         <activity android:name=".RoundsActivity" />
         <activity android:name=".QuestionsActivity" />
-        <activity android:name=".NewQuestionActivity"></activity>
+        <activity android:name=".NewQuestionActivity" />
+        <activity android:name=".QuestionViewActivity" />
+        <activity android:name=".FullScreenActivity"></activity>
     </application>
 
 </manifest>

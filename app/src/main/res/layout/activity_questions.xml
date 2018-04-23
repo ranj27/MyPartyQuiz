@@ -41,6 +41,19 @@
             android:text="Button" />
     </LinearLayout>-->
 
+    <!--<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/startBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Start Quiz" />
+    </LinearLayout>
+-->
     <TableLayout
         android:id="@+id/tableForQuestions"
         android:layout_width="match_parent"
@@ -50,43 +63,63 @@
         <TableRow
             android:id="@+id/row1"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_margin="1dp">
 
             <Button
                 android:id="@+id/catBtn1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-                <!--android:text="Movies" />-->
+                android:layout_height="wrap_content"
+                android:layout_marginRight="1dp"
+                android:layout_weight="1"
+                android:background="@android:color/holo_red_light"
+                android:elevation="0dp" />
+            <!--android:text="Movies" />-->
 
             <Button
                 android:id="@+id/catBtn2"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-                <!--android:text="History" />-->
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/holo_blue_light"
+                android:paddingRight="1dp" />
+            <!--android:text="History" />-->
 
             <Button
                 android:id="@+id/catBtn3"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-                <!--android:text="Fun Stuff" />-->
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/holo_orange_light"
+                android:paddingRight="1dp" />
+            <!--android:text="Fun Stuff" />-->
 
             <Button
                 android:id="@+id/catBtn4"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-                <!--android:text="Science" />-->
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/holo_green_light"
+                android:paddingRight="1dp" />
+            <!--android:text="Science" />-->
 
             <Button
                 android:id="@+id/catBtn5"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-                <!--android:text="Math" />-->
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/holo_purple"
+                android:paddingRight="1dp" />
+            <!--android:text="Math" />-->
 
             <Button
                 android:id="@+id/catBtn6"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-                <!--android:text="Epics" />-->
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/holo_blue_bright"
+                android:paddingRight="1dp" />
+            <!--android:text="Epics" />-->
 
         </TableRow>
 

@@ -49,6 +49,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
     private Button mQuizCancelBtn;
     private AlertDialog mDialog;
     private TableLayout mSettingsTable;
+    private int mQuizId;
+    private Button mStartBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +59,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
         mNewQuizBtn = (Button) findViewById(R.id.newQuiz);
         mOpenQuizBtn = (Button) findViewById(R.id.openQuiz);
         mSettingsBtn = (Button)findViewById(R.id.settingsBtn);
+        mStartBtn = (Button)findViewById(R.id.startBtn);
         mNewQuizBtn.setOnClickListener(this);
         mOpenQuizBtn.setOnClickListener(this);
         mSettingsBtn.setOnClickListener(this);
+        mStartBtn.setOnClickListener(this);
 
         db = new DatabaseHelper(getApplicationContext());
 //        mFragmentManager = getSupportFragmentManager();
@@ -73,13 +77,21 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
                 createNewQuizWindow();
                 break;
             case R.id.openQuiz:
-                openQuizWindow();
+                openQuizWindow(false);
+                break;
+            case R.id.startBtn:
+                startQuiz();
                 break;
             case R.id.settingsBtn:
                 showSettingsWindow();
                 break;
 
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void startQuiz() {
+        openQuizWindow(true);
     }
 
     private void showSettingsWindow() {
@@ -144,7 +156,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void openQuizWindow() {
+    private void openQuizWindow(final boolean viewOnly) {
         ArrayList<String> quizNameList = new ArrayList<String>();
         List<Quiz> quizes = db.getAllQuiz();
         for (Quiz q: quizes){
@@ -173,17 +185,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
                 if (quiz != null) {
 //                    Toast.makeText(getApplicationContext(), "Selected Quiz " + adapterView.getItemAtPosition(i).toString(), Toast.LENGTH_LONG).show();
                     mDialog.dismiss();
-                    launchQuizRoundsWindow(quiz.getQuizId(),quiz.getQuizRounds());
+                    launchQuizRoundsWindow(quiz.getQuizId(),quiz.getQuizRounds(),viewOnly);
                 }
             }
         });
 
     }
 
-    private void launchQuizRoundsWindow(int quizID,String roundsCount) {
+    private void launchQuizRoundsWindow(int quizID, String roundsCount, boolean viewOnly) {
         Intent intent = new Intent(getApplicationContext(), RoundsActivity.class);
         intent.putExtra("roundsCount",roundsCount);
         intent.putExtra("quizID",quizID);
+        intent.putExtra("viewOnly",viewOnly);
         startActivity(intent);
     }
 
@@ -237,6 +250,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
                         dialog.dismiss();
                         Intent intent = new Intent(getApplicationContext(), RoundsActivity.class);
                         intent.putExtra("roundsCount", mQuizRounds.getText().toString());
+                        intent.putExtra("quizID",mQuizId);
                         startActivity(intent);
                     }
                 }
@@ -273,6 +287,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Quiz
             } else {
                 Toast.makeText(getApplicationContext(), quizName + " created", Toast.LENGTH_LONG).show();
                 mCreateResult = true;
+                mQuizId = (int)rowData;
 //                updateCreateResult();
             }
         } else {

@@ -1,16 +1,14 @@
 package com.quiz.rsudheen.partyquiz.database;
 
-import java.util.Comparator;
-
 /**
  * Created by rsudheen on 1/8/2018.
  */
 
 public class Questions {
+    byte[] photo;
     int questionId;
     int roundId;
     int quizId;
-
     int categoryId;
     int scoreId;
     String choices;
@@ -18,8 +16,11 @@ public class Questions {
     private String question;
     private String categoryName;
 
+    public Questions(){
 
-    public Questions(int questionId, int roundId, int quizId, int scoreId, String choices, String answer, int category, String categoryName) {
+    }
+
+    public Questions(int questionId, int roundId, int quizId, int scoreId, String choices, String answer, int category, String categoryName, byte[] photo) {
         this.questionId = questionId;
         this.roundId = roundId;
         this.quizId = quizId;
@@ -28,10 +29,7 @@ public class Questions {
         this.answer = answer;
         this.categoryId = category;
         this.categoryName = categoryName;
-    }
-
-    public Questions() {
-
+        this.photo = photo;
     }
 
     public int getCategoryId() {
@@ -106,6 +104,12 @@ public class Questions {
         return categoryName;
     }
 
+    public byte[] getPhoto() {
+        return photo;
+    }
 
+    public void setPhoto(byte[] photo) {
+        this.photo = photo;
+    }
 }
 

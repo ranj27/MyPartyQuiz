@@ -29,6 +29,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TABLE_ROUNDS = "rounds";
     private static final String TABLE_SCORE = "scores";
     private static final String TABLE_CATEGORY = "category";
+    private static final String TABLE_QUIZ_CATEGORY="quiz_category";
 
     // Common column names
     private static final String KEY_ID = "id";
@@ -38,7 +39,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_QUIZ_NAME = "quiz_name";
     private static final String KEY_QUIZ_ROUNDS = "quizRounds";
 
-    //SCore table column names
+   //SCore table column names
     private static String KEY_SCORE_COMPLEXITY = "complexity";
     private static String KEY_SCORE_VALUE = "score";
 
@@ -50,6 +51,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_ROUND_ID = "round_id";
     private static final String KEY_SCORE_ID = "score_id";
     private static final String KEY_CATEGORY_ID = "category_id";
+    private static final String KEY_PHOTO = "photo";
 
     //Categories table column names
     private static final String KEY_CATEGORY_NAME = "category_name";
@@ -79,6 +81,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + TABLE_CATEGORY + "(" + KEY_ID + " INTEGER PRIMARY KEY, " + KEY_CATEGORY_NAME
             + " TEXT UNIQUE, " + KEY_CREATED_AT + " DATETIME)";
 
+    //Quiz Category table create statement
+    private static final String CREATE_TABLE_QUIZ_CATEGORY = "CREATE TABLE "
+            + TABLE_QUIZ_CATEGORY + "(" + KEY_ID + " INTEGER PRIMARY KEY, " + KEY_CATEGORY_ID + " INTEGER, "
+            + KEY_QUIZ_ID + " INTEGER, " + KEY_ROUND_ID + " INTEGER)";
+
     //Insert default values into the categories table
     private static final String INSERT_ROWS_TABLE_CATEGORY = "INSERT INTO "
             + TABLE_CATEGORY + " (" + KEY_CATEGORY_NAME + ") VALUES ('MOVIES'),('HISTORY'),('FUN STUFF'),('SCIENCE'),('MATH'),('EPICS')";
@@ -87,8 +94,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_TABLE_QUESTIONS = "CREATE TABLE "
             + TABLE_QUESTIONS + "(" + KEY_ID + " INTEGER PRIMARY KEY, " + KEY_QUESTION
             + " TEXT UNIQUE, " + KEY_CHOICES + " TEXT, " + KEY_ANSWER + " TEXT, " + KEY_QUIZ_ID + " INTEGER, "
-            + KEY_ROUND_ID + " INTEGER, " + KEY_SCORE_ID + " INTEGER, " + KEY_CATEGORY_ID + " INTEGER, " + KEY_CATEGORY_NAME + " TEXT, "
-            + KEY_CREATED_AT + " DATETIME)";
+            + KEY_ROUND_ID + " INTEGER, " + KEY_SCORE_ID + " INTEGER, " + KEY_CATEGORY_ID + " INTEGER, "
+            + KEY_PHOTO + " BLOB, " + KEY_CREATED_AT + " DATETIME)";
 
 
     public DatabaseHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
@@ -111,12 +118,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(CREATE_TABLE_CATEGORY);
         sqLiteDatabase.execSQL(INSERT_ROWS_TABLE_CATEGORY);
         sqLiteDatabase.execSQL(CREATE_TABLE_QUESTIONS);
+        sqLiteDatabase.execSQL(CREATE_TABLE_QUIZ_CATEGORY);
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_QUIZ);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_SCORE);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_CATEGORY);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_QUESTIONS);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_QUIZ_CATEGORY);
         onCreate(sqLiteDatabase);
     }
 
@@ -158,6 +170,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return quiz;
+    }
+
+    //Insert default categories to Quiz_Category table
+    public void insertDefaultCategories(int quizId, int roundId){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String insertQuery = "INSERT INTO " + TABLE_QUIZ_CATEGORY + "(" + KEY_CATEGORY_ID + ","
+                + KEY_QUIZ_ID + "," + KEY_ROUND_ID + ") VALUES "
+                + "(1," + quizId + "," + roundId + "),"
+                + "(2," + quizId + "," + roundId + "),"
+                + "(3," + quizId + "," + roundId + "),"
+                + "(4," + quizId + "," + roundId + "),"
+                + "(5," + quizId + "," + roundId + "),"
+                + "(6," + quizId + "," + roundId + ")";
+
+
+        db.execSQL(insertQuery);
+
     }
 
     //Read quiz by name
@@ -307,12 +336,39 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 question.setCategoryId(c.getInt(c.getColumnIndex(KEY_CATEGORY_ID)));
                 question.setAnswer(c.getString(c.getColumnIndex(KEY_ANSWER)));
                 question.setChoices(c.getString(c.getColumnIndex(KEY_CHOICES)));
-                question.setCategoryName(c.getString(c.getColumnIndex(KEY_CATEGORY_NAME)));
+                question.setCategoryId(c.getInt(c.getColumnIndex(KEY_CATEGORY_ID)));
+//                question.setCategoryName(c.getString(c.getColumnIndex(KEY_CATEGORY_NAME)));
                 questions.add(question);
             } while (c.moveToNext());
         }
 
         return questions;
+    }
+
+    public List<Scores> getScoresbyQuizId(int quizId, int roundId) {
+        List<Scores> scores = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String selectQuery = "SELECT *  FROM " + TABLE_SCORE
+                + " WHERE " + KEY_ID + " IN (SELECT  DISTINCT " + KEY_SCORE_ID + " FROM " + TABLE_QUESTIONS + " WHERE "
+                + KEY_QUIZ_ID + " = " + quizId + " AND " + KEY_ROUND_ID + " = " + roundId + ")";
+
+        //Log.e(LOG, selectQuery);
+
+        Cursor c = db.rawQuery(selectQuery, null);
+
+        if (c != null)
+            c.moveToFirst();
+        if (c.getCount() > 0) {
+            do {
+                Scores score = new Scores();
+                score.setComplexity(c.getString(c.getColumnIndex(KEY_SCORE_COMPLEXITY)));
+                score.setScore(c.getInt(c.getColumnIndex(KEY_SCORE_VALUE)));
+                scores.add(score);
+            } while (c.moveToNext());
+
+        }
+
+        return scores;
     }
 
     //Get Questions Categories based on quiz ID and round id
@@ -342,15 +398,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return categories;
     }
 
+
     //Get Questions Categories based on quiz ID and round id
     public List<Categories> getCategoriesFoQuizId(int quizId, int roundId) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<Categories> categories = new ArrayList<>();
 
-        String selectQuery = "SELECT DISTINCT " + KEY_CATEGORY_NAME + " FROM " + TABLE_QUESTIONS
+        /*String selectQuery = "SELECT DISTINCT " + KEY_CATEGORY_NAME + " FROM " + TABLE_QUESTIONS
                 + " WHERE " + KEY_QUIZ_ID + " = " + quizId + " AND " + KEY_ROUND_ID + " = " + roundId;
+*/
+       /* String selectQuery = "SELECT " + KEY_CATEGORY_NAME + " FROM " + TABLE_CATEGORY + " WHERE "
+                + KEY_ID + " IN ( SELECT " + KEY_CATEGORY_ID + " FROM " + TABLE_QUIZ_CATEGORY + " WHERE "
+                + KEY_QUIZ_ID + "=" + quizId + " AND " + KEY_ROUND_ID + "=" + roundId + " ORDER BY " + KEY_ID + ")";
+        //Log.e(LOG, selectQuery);*/
 
-        //Log.e(LOG, selectQuery);
+        String selectQuery = "SELECT " +  "b." + KEY_CATEGORY_NAME + " FROM " + TABLE_QUIZ_CATEGORY + " a , " + TABLE_CATEGORY + " b" +
+                " WHERE  a."+ KEY_CATEGORY_ID + "=b."+KEY_ID+" AND a."+KEY_QUIZ_ID +"="+quizId +" AND a."+ KEY_ROUND_ID +"="+roundId;
 
         Cursor c = db.rawQuery(selectQuery, null);
 
@@ -376,38 +439,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.close();
     }
 
-
-    public List<Scores> getScoresbyQuizId(int quizId, int roundId) {
-        List<Scores> scores = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        String selectQuery = "SELECT *  FROM " + TABLE_SCORE
-                + " WHERE " + KEY_ID + " IN (SELECT  DISTINCT " + KEY_SCORE_ID + " FROM " + TABLE_QUESTIONS + " WHERE "
-                + KEY_QUIZ_ID + " = " + quizId + " AND " + KEY_ROUND_ID + " = " + roundId + ")";
-
-        //Log.e(LOG, selectQuery);
-
-        Cursor c = db.rawQuery(selectQuery, null);
-
-        if (c != null)
-            c.moveToFirst();
-        if (c.getCount() > 0) {
-            do {
-                Scores score = new Scores();
-                score.setComplexity(c.getString(c.getColumnIndex(KEY_SCORE_COMPLEXITY)));
-                score.setScore(c.getInt(c.getColumnIndex(KEY_SCORE_VALUE)));
-                scores.add(score);
-            } while (c.moveToNext());
-
-        }
-
-        return scores;
-    }
-
     public Categories getCategoryByName(String s) {
         SQLiteDatabase db = this.getReadableDatabase();
         Categories category = new Categories();
         String selectQuery = "SELECT  * FROM " + TABLE_CATEGORY + " WHERE "
-                + KEY_CATEGORY_NAME + " = '" + s.toUpperCase() + "'";
+                + KEY_CATEGORY_NAME + " LIKE '" + s.toUpperCase() + "'";
 
         //Log.e(LOG, selectQuery);
 
@@ -457,7 +493,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public long insertNewQuestion(String questionTxt, String answerTxt, String choice2Txt, String choice3Txt, String choice4Txt, int quizId, int roundId, String categoryName, String score) {
+    public long insertNewQuestion(String questionTxt, String answerTxt, String choice2Txt, String choice3Txt, String choice4Txt, int quizId, int roundId, String categoryName, int categoryId, String score, byte[] photo) {
         SQLiteDatabase db = this.getWritableDatabase();
         String choices = choice2Txt.concat(";").concat(choice3Txt).concat(";").concat(choice4Txt);
        /* String insertQuery = "INSERT INTO " + TABLE_QUESTIONS + " (" + KEY_QUIZ_ID + "," + KEY_ROUND_ID + "," + KEY_QUESTION + ","
@@ -472,7 +508,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(KEY_QUESTION, questionTxt);
         contentValues.put(KEY_ANSWER, answerTxt);
         contentValues.put(KEY_CHOICES, choices);
-        contentValues.put(KEY_CATEGORY_NAME, categoryName);
+//        contentValues.put(KEY_CATEGORY_NAME, categoryName);
+        contentValues.put(KEY_CATEGORY_ID,categoryId);
+        contentValues.put(KEY_PHOTO,photo);
 
         //insert row
         long rowData = db.insert(TABLE_QUESTIONS, null, contentValues);
@@ -499,7 +537,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             questions.setQuestionId(c.getInt(c.getColumnIndex(KEY_ID)));
             questions.setQuestion((c.getString(c.getColumnIndex(KEY_QUESTION))));
             questions.setAnswer(c.getString(c.getColumnIndex(KEY_ANSWER)));
-            questions.setCategoryName(c.getString(c.getColumnIndex(KEY_CATEGORY_NAME)));
+            questions.setCategoryId(c.getInt(c.getColumnIndex(KEY_CATEGORY_ID)));
+            questions.setPhoto(c.getBlob(c.getColumnIndex(KEY_PHOTO)));
+//            questions.setCategoryName(c.getString(c.getColumnIndex(KEY_CATEGORY_NAME)));
         }
 
 
@@ -509,9 +549,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public List<Questions> getQuestionsByCategory(String categoryName, int quizId, int roundId) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<Questions> questions = new ArrayList<>();
-        String selectQuery = "SELECT  * FROM " + TABLE_QUESTIONS + " WHERE "
-                + KEY_CATEGORY_NAME + " = '" + categoryName + "' AND " + KEY_QUIZ_ID + " = " + quizId + " AND "
-                + KEY_ROUND_ID + " = " + roundId;
+       /* String selectQuery = "SELECT  * FROM " + TABLE_QUESTIONS + " WHERE "
+                + KEY_CATEGORY_ID + "= (SELECT  " + KEY_ID + " FROM " + TABLE_CATEGORY + " WHERE " + KEY_CATEGORY_NAME + " LIKE '" +categoryName + "') AND " + KEY_QUIZ_ID + " = " + quizId + " AND "
+                + KEY_ROUND_ID + " = " + roundId;*/
+       String selectQuery = "SELECT a." + KEY_ID + ", b."+KEY_CATEGORY_NAME + " FROM " + TABLE_QUESTIONS + " a, " + TABLE_CATEGORY + " b "
+               + "WHERE a."+KEY_CATEGORY_ID + "= b."+KEY_ID +" AND a."+KEY_QUIZ_ID + "=" + quizId + " AND a."+KEY_ROUND_ID + "=" + roundId
+               + " AND b." + KEY_CATEGORY_NAME + " LIKE '" + categoryName + "'";
 
         //Log.e(LOG, selectQuery);
 
@@ -523,10 +566,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
                 Questions question = new Questions();
                 question.setQuestionId(c.getInt(c.getColumnIndex(KEY_ID)));
-                question.setQuestion((c.getString(c.getColumnIndex(KEY_QUESTION))));
-                question.setAnswer(c.getString(c.getColumnIndex(KEY_ANSWER)));
+//                question.setQuestion((c.getString(c.getColumnIndex(KEY_QUESTION))));
+//                question.setAnswer(c.getString(c.getColumnIndex(KEY_ANSWER)));
                 question.setCategoryName(c.getString(c.getColumnIndex(KEY_CATEGORY_NAME)));
-                question.setChoices(c.getString(c.getColumnIndex(KEY_CHOICES)));
+//                question.setCategoryId(c.getInt(c.getColumnIndex(KEY_CATEGORY_ID)));
+//                question.setChoices(c.getString(c.getColumnIndex(KEY_CHOICES)));
                 questions.add(question);
             } while (c.moveToNext());
         }
@@ -535,7 +579,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return questions;
     }
 
-    public long UpdateQuestion(int questionId, String questionTxt, String answerTxt, String choice2Txt, String choice3Txt, String choice4Txt, int quizId, int roundId, String categoryName, String score) {
+    public long UpdateQuestion(int questionId, String questionTxt, String answerTxt, String choice2Txt, String choice3Txt, String choice4Txt, int quizId, int roundId, String categoryName, int categoryId, String score, byte[] photo) {
         SQLiteDatabase db = this.getWritableDatabase();
         String choices = choice2Txt.concat(";").concat(choice3Txt).concat(";").concat(choice4Txt);
 
@@ -545,12 +589,59 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(KEY_QUESTION, questionTxt);
         contentValues.put(KEY_ANSWER, answerTxt);
         contentValues.put(KEY_CHOICES, choices);
-        contentValues.put(KEY_CATEGORY_NAME, categoryName);
+//        contentValues.put(KEY_CATEGORY_NAME, categoryName);
+        contentValues.put(KEY_CATEGORY_ID,categoryId);
+        contentValues.put(KEY_PHOTO,photo);
 
-        //update row
+        //update0 row
         long rowData = db.update(TABLE_QUESTIONS, contentValues, KEY_ID + " = ?", new String[]{String.valueOf(questionId)});
         return rowData;
 
+    }
+
+    public void updateQuizCategoryName(int quizId, int roundId, String currentCategoryName, String newCategoryName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Categories categories = null;
+        int categoryId =-1;
+        newCategoryName = newCategoryName.toUpperCase();
+        String selectQuery = "SELECT * FROM " + TABLE_CATEGORY + " WHERE " + KEY_CATEGORY_NAME + " LIKE '" + newCategoryName + "'";
+        Cursor c = db.rawQuery(selectQuery,null);
+        if (c !=null ){
+            c.moveToFirst();
+        }
+        if (c.getCount()>0){
+            categories = new Categories();
+            categories.setCategoryId(c.getInt(c.getColumnIndex(KEY_ID)));
+        }
+        if (categories!=null) {
+            categoryId = categories.getCategoryId();
+        }else{
+            String insertQuery = "INSERT INTO " + TABLE_CATEGORY + "(" + KEY_CATEGORY_NAME + ") VALUES ('" + newCategoryName + "')";
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(KEY_CATEGORY_NAME,newCategoryName);
+            //db.rawQuery(insertQuery,null);
+            long rowdata = db.insert(TABLE_CATEGORY,null,contentValues);
+            categoryId = (int) rowdata;
+        }
+        //Update category in Quiz_Category table
+        if (categoryId!=-1) {
+            String updateQuery = "UPDATE " + TABLE_QUIZ_CATEGORY + " SET " + KEY_CATEGORY_ID + " = " + categoryId +
+                    " WHERE " + KEY_CATEGORY_ID + " = (SELECT " + KEY_ID + " FROM " + TABLE_CATEGORY + " WHERE " + KEY_CATEGORY_NAME
+                    + " LIKE '" + currentCategoryName + "') AND " + KEY_QUIZ_ID + "=" + quizId + " AND " + KEY_ROUND_ID + "=" + roundId;
+            db.execSQL(updateQuery);
+            //Update categories for the questions
+            updateQuery = "UPDATE " + TABLE_QUESTIONS + " SET " + KEY_CATEGORY_ID + " = " + categoryId + " WHERE " + KEY_CATEGORY_ID + " = "
+                    + "(SELECT " + KEY_ID + " FROM " + TABLE_CATEGORY + " WHERE " + KEY_CATEGORY_NAME + " LIKE '" + currentCategoryName + "')"
+                    + " AND " + KEY_ROUND_ID + " = " + roundId + " AND " + KEY_QUIZ_ID + " = " + quizId;
+            db.execSQL(updateQuery);
+
+        }
+
+
+
+    }
+
+    public void updateQuestionCategory(int quizId, int roundId, String currentCategoryName, String newCategoryName) {
     }
 }
 

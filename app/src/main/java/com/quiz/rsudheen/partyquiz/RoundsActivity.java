@@ -18,6 +18,7 @@ public class RoundsActivity extends Activity {
     private static final int ROW_COUNT = 4;
     private int roundsCount;
     private int quizId;
+    private boolean viewOnly;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +28,7 @@ public class RoundsActivity extends Activity {
         Bundle extras = intent.getExtras();
         quizId = extras.getInt("quizID");
         roundsCount = Integer.parseInt(intent.getStringExtra("roundsCount"));
+        viewOnly = extras.getBoolean("viewOnly");
 
         populateButtons(roundsCount);
 
@@ -72,6 +74,7 @@ public class RoundsActivity extends Activity {
         Intent intent = new Intent(getApplicationContext(), QuestionsActivity.class);
         intent.putExtra("roundID", id);
         intent.putExtra("quizID",quizId);
+        intent.putExtra("viewOnly",viewOnly);
         startActivity(intent);
 
     }
